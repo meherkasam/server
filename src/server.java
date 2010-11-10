@@ -6,7 +6,8 @@ public class server {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		new Listener();
+		Listener.serverRoot = args[1];
+		new Listener(args[0]);
 		new CommandProcessor();
 	}
 

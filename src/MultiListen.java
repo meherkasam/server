@@ -1,3 +1,4 @@
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -32,8 +33,10 @@ public class MultiListen implements Runnable{
 	    		try {
 	    			input = (DataObject) is.readObject();
 	    		}
-	    		catch (Exception E) {
-	    			System.out.println(E);
+	    		catch(EOFException E){
+	    	    	System.out.println("Client disconnected");
+	    	    	clientSocket.close();
+    				break;
 	    		}
 	    		output = processor.process(input);
     			os.writeObject(output);

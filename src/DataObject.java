@@ -7,9 +7,12 @@ public class DataObject implements Serializable {
 	public int reqNo;
 	boolean success = true;
 	static final long serialVersionUID = 42L;
-	public String clientId;
+	public String senderId;
+	public boolean isServer;
 	public DataObject(int size) {
 		size*=1024;
+		isServer = true;
+		message = "";
 		if(size == 0) {
 			length = 0;
 			data = null;
@@ -20,6 +23,8 @@ public class DataObject implements Serializable {
 	}
 	public DataObject(int size, int reqNum){
 		reqNo = reqNum;
+		message = "";
+		isServer = true;
 		if(size == 0) {
 			length = 0;
 			data = null;

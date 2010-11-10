@@ -18,13 +18,12 @@ import java.util.Iterator;
 public class CommandProcessor {
 	public final static int KB2B = 1024;
 	private static ConcurrentHashMap<String, File> lookedUpFiles = null;
-	static String serverRoot = "./";
 	FileOutputStream streamToBeWritten = null;
 	public static ConcurrentHashMap<String, FileObject> listOfFileObjects = null;
 	public CommandProcessor() {
 		lookedUpFiles = new ConcurrentHashMap<String, File>();
 		listOfFileObjects = new ConcurrentHashMap<String, FileObject>();
-		File folder = new File(serverRoot);
+		File folder = new File(Listener.serverRoot);
 		int i = 0;
 		File[] listOfFiles = folder.listFiles();
 		for(i = 0; (i < listOfFiles.length); i++) {
@@ -52,19 +51,19 @@ public class CommandProcessor {
 			}
 			else if(tokens[1].compareToIgnoreCase("GET") == 0) {
 				DataObject a = new DataObject(0, Integer.parseInt(tokens[2]));
-				a.clientId = input.clientId;
+				a.senderId = input.senderId;
 				Get(a, tokens[3], Integer.parseInt(tokens[4]));
 				return a;
 			}
 			else if(tokens[1].compareToIgnoreCase("PULL") == 0) {
 				DataObject a = new DataObject(Integer.parseInt(tokens[5]), Integer.parseInt(tokens[2]));
-				a.clientId = input.clientId;
+				a.senderId = input.senderId;
 				Pull(a, tokens[3], Integer.parseInt(tokens[4]), Integer.parseInt(tokens[5]));
 				return a;
 			}
 			else if(tokens[1].compareToIgnoreCase("PUT") == 0) {
 				DataObject a = new DataObject(0, Integer.parseInt(tokens[2]));
-				a.clientId = input.clientId;
+				a.senderId = input.senderId;
 				Put(a, tokens[3], Integer.parseInt(tokens[4]));
 				return a;
 			}
@@ -72,7 +71,7 @@ public class CommandProcessor {
 				DataObject a = new DataObject(Integer.parseInt(tokens[6]), Integer.parseInt(tokens[2]));
 				a.data = input.data;
 				a.length = input.length;
-				a.clientId = input.clientId;
+				a.senderId = input.senderId;
 				boolean isLast = false;
 				if(tokens[4].compareTo("LAST") == 0) {
 					isLast = true;
@@ -82,7 +81,7 @@ public class CommandProcessor {
 			}
 			else if(tokens[1].compareToIgnoreCase("DELETE") == 0) {
 				DataObject a = new DataObject(0, Integer.parseInt(tokens[2]));
-				a.clientId = input.clientId;
+				a.senderId = input.senderId;
 				Delete(a, tokens[3], Integer.parseInt(tokens[4]));
 				return a;
 			}
@@ -150,7 +149,7 @@ public class CommandProcessor {
 			SecureRandom keyGen = new SecureRandom();
 			String randFileId = new BigInteger(130, keyGen).toString(32);
 			a.message += " " + fileName + " READY " + randFileId;
-			lookedUpFiles.put(a.clientId + ":" + randFileId, listOfFileObjects.get(fileName).fileHandle);
+			lookedUpFiles.put(a.senderId + ":" + randFileId, listOfFileObjects.get(fileName).fileHandle);
 		}
 		return a;
 	}
@@ -171,11 +170,11 @@ public class CommandProcessor {
 		SecureRandom keyGen = new SecureRandom();
 		String randFileId = new BigInteger(130, keyGen).toString(32);
 		a.message += " " + fileName + " READY " + randFileId;
-		File fileToBeWritten = new File(serverRoot + fileName);
+		File fileToBeWritten = new File(Listener.serverRoot + fileName);
 		if(!fileFound)
 			listOfFileObjects.put(fileName, new FileObject(fileToBeWritten));
 		listOfFileObjects.get(fileName).lock.getWriteLock(priority);
-		lookedUpFiles.put(a.clientId + ":" + randFileId, listOfFileObjects.get(fileName).fileHandle);
+		lookedUpFiles.put(a.senderId + ":" + randFileId, listOfFileObjects.get(fileName).fileHandle);
 		//FileObject newFileHandle = new FileObject (fileToBeWritten);
 		//listOfFileObjects.put(listOfFiles[i].getName(),a);
 		try {
@@ -188,7 +187,7 @@ public class CommandProcessor {
 	}
 	DataObject Pull(DataObject a, String fileId, int startByte, int length) {
 		a.message = "Rsp Pull " + String.valueOf(a.reqNo);
-		String clientIdFileHash = a.clientId + ":" + fileId;
+		String clientIdFileHash = a.senderId + ":" + fileId;
 		if(lookedUpFiles.containsKey(clientIdFileHash)) {
 			DataObject b = FileRead(a, lookedUpFiles.get(clientIdFileHash), startByte, length);
 			if (b == null) {
@@ -210,7 +209,7 @@ public class CommandProcessor {
 	}
 	DataObject Push(DataObject a, String fileId, int startByte, int length, boolean isLast) {
 		a.message = "Rsp Push " + String.valueOf(a.reqNo);
-		String clientIdFileHash = a.clientId + ":" + fileId;
+		String clientIdFileHash = a.senderId + ":" + fileId;
 		try {
 			streamToBeWritten.write(a.data, 0, length);
 			streamToBeWritten.flush();
