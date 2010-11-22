@@ -185,11 +185,18 @@ public class CommandProcessor {
 		}
 		return a;
 	}
-	DataObject Pull(DataObject a, String fileId, int startByte, int length) {
+	DataObject Pull(DataObject a, String fileName, int startByte, int length) {
+		System.out.println("Pull requested: " + fileName);
 		a.message = "Rsp Pull " + String.valueOf(a.reqNo);
-		String clientIdFileHash = a.senderId + ":" + fileId;
-		if(lookedUpFiles.containsKey(clientIdFileHash)) {
-			DataObject b = FileRead(a, lookedUpFiles.get(clientIdFileHash), startByte, length);
+		File folder = new File(Listener.serverRoot);
+		File[] listOfFiles = folder.listFiles();
+		File fileToRead = null;
+		for(int i = 0; (i < listOfFiles.length); i++) {
+			if(listOfFiles[i].getName() == fileName)
+				fileToRead = listOfFiles[i];
+		}
+		if(fileToRead != null) {
+			DataObject b = FileRead(a, fileToRead, startByte, length);
 			if (b == null) {
 				a.message += " FAILURE 0x005";
 				a.success = false;
@@ -197,8 +204,6 @@ public class CommandProcessor {
 			else {
 				if(a.length < length){
 					a.message += " " + "SUCCESS LAST " + Integer.toString(startByte) + " " + Integer.toString(b.length);
-					listOfFileObjects.get(lookedUpFiles.get(clientIdFileHash).getName()).lock.readerDone();
-					lookedUpFiles.remove(clientIdFileHash);
 				}
 				else {
 					a.message += " " + "SUCCESS NOTLAST " + Integer.toString(startByte) + " " + Integer.toString(b.length);
@@ -207,16 +212,18 @@ public class CommandProcessor {
 		}
 		return a;
 	}
-	DataObject Push(DataObject a, String fileId, int startByte, int length, boolean isLast) {
+	DataObject Push(DataObject a, String fileName, int startByte, int length, boolean isLast) {
 		a.message = "Rsp Push " + String.valueOf(a.reqNo);
-		String clientIdFileHash = a.senderId + ":" + fileId;
+		System.out.println("Push requested: " + fileName);
+		File fileToBeWritten = new File(Listener.serverRoot + fileName);
 		try {
+			if(streamToBeWritten == null)
+				streamToBeWritten = new FileOutputStream(fileToBeWritten);
 			streamToBeWritten.write(a.data, 0, length);
 			streamToBeWritten.flush();
 			if (isLast) {
 				streamToBeWritten.close();
-				listOfFileObjects.get(lookedUpFiles.get(clientIdFileHash).getName()).lock.writerDone();
-				lookedUpFiles.remove(clientIdFileHash);
+				streamToBeWritten = null;
 			}
 		}
 		catch(IOException e) {
