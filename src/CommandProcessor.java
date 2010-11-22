@@ -192,7 +192,8 @@ public class CommandProcessor {
 		File[] listOfFiles = folder.listFiles();
 		File fileToRead = null;
 		for(int i = 0; (i < listOfFiles.length); i++) {
-			if(listOfFiles[i].getName() == fileName)
+			String fName = listOfFiles[i].getName();
+			if(fName.compareTo(fileName) == 0)
 				fileToRead = listOfFiles[i];
 		}
 		if(fileToRead != null) {
