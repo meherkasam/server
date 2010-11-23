@@ -2,9 +2,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.net.UnknownHostException;
-
+import javax.net.ssl.*;
 
 public class PopulateBroker implements Runnable {
 	static ObjectInputStream is = null;
@@ -14,9 +13,11 @@ public class PopulateBroker implements Runnable {
 	}
 	
 	public void run() {
-		Socket serverSocket;
+		SSLSocket serverSocket;
 		try {
-			serverSocket = new Socket(Listener.brokerHost, Listener.brokerPort);
+			SSLSocketFactory f = (SSLSocketFactory) SSLSocketFactory.getDefault();
+			serverSocket = (SSLSocket) f.createSocket(Listener.brokerHost, Listener.brokerPort);
+			serverSocket.setEnabledCipherSuites(serverSocket.getSupportedCipherSuites());
 			os = new ObjectOutputStream(serverSocket.getOutputStream());
 			is = new ObjectInputStream(serverSocket.getInputStream());
 			

@@ -1,8 +1,9 @@
 import java.io.*;
 import java.math.BigInteger;
-import java.net.*;
+import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.lang.Thread;
+import javax.net.ssl.*;
 
 public class Listener{
 	static BufferedReader configFile = null;
@@ -54,8 +55,8 @@ public class Listener{
 		return true;
 	}
 	
-	ServerSocket listenerSocket = null;
-	Socket clientSocket = null;
+	SSLServerSocket listenerSocket = null;
+	SSLSocket clientSocket = null;
 	public Listener(String fileName) {
 		reqNo = 0;
 		if(!ReadConfig(fileName)) {
@@ -67,17 +68,35 @@ public class Listener{
 		PopulateBroker myTalker = new PopulateBroker();
     	Thread p = new Thread(myTalker);
     	p.start();
-	    try{
-	    		listenerSocket = new ServerSocket(localPort);
+    	//End of broker-populate
+    	
+    	//Start of SSL Server Socket creation
+    	String ksName = "herong.jks";
+		char ksPass[] = "HerongJKS".toCharArray();
+		char ctPass[] = "HerongJKS".toCharArray();
+    	try {
+			KeyStore ks = KeyStore.getInstance("JKS");
+			ks.load(new FileInputStream(ksName), ksPass);
+			KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+			kmf.init(ks, ctPass);
+			SSLContext sc = SSLContext.getInstance("TLS");
+			sc.init(kmf.getKeyManagers(), null, null);
+			SSLServerSocketFactory ssf = sc.getServerSocketFactory();
+			listenerSocket = (SSLServerSocket) ssf.createServerSocket(localPort);
+			listenerSocket.setEnabledCipherSuites(listenerSocket.getSupportedCipherSuites());
 	    }
-	    catch (IOException e){
+	    catch (IOException e) {
 	    	System.out.println("Unable to create listener socket: " + e);
 	    	System.exit(1);
+	    }
+	    catch (Exception e) {
+	         System.err.println(e.toString());
 	    }
 	    System.out.println ("Created listener socket successfully on port no. "+ localPort);
 	    while(true){
 	    	try{
-		    	clientSocket = listenerSocket.accept();
+		    	clientSocket = (SSLSocket) listenerSocket.accept();
+		    	clientSocket.startHandshake();
 		    	System.out.println("Client connected");
 		    	MultiListen myListener = new MultiListen(clientSocket);
 		    	Thread t = new Thread(myListener);
