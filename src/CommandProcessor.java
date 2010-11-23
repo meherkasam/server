@@ -140,8 +140,8 @@ public class CommandProcessor {
 		}
 		else {
 			try{
-				FileObject x = listOfFileObjects.get(fileName);
-				x.lock.getReadLock(priority);
+				//FileObject x = listOfFileObjects.get(fileName);
+				//x.lock.getReadLock(priority);
 			}
 			catch (Exception E){
 				System.out.println(E);
@@ -162,18 +162,18 @@ public class CommandProcessor {
 		if(fileFound) {
 			//a.message += " " + fileName + " FAILURE 0x005";
 			//a.success = false;
-			listOfFileObjects.get(fileName).lock.getWriteLock(priority);
+			//listOfFileObjects.get(fileName).lock.getWriteLock(priority);
 			listOfFileObjects.get(fileName).fileHandle.delete();
-			listOfFileObjects.get(fileName).lock.writerDone();
+			//listOfFileObjects.get(fileName).lock.writerDone();
 			//listOfFileObjects.remove(fileName);
 		}
 		SecureRandom keyGen = new SecureRandom();
 		String randFileId = new BigInteger(130, keyGen).toString(32);
 		a.message += " " + fileName + " READY " + randFileId;
-		File fileToBeWritten = new File(Listener.serverRoot + fileName);
+		File fileToBeWritten = new File(Listener.tmpRoot + "tmp_" + fileName);
 		if(!fileFound)
 			listOfFileObjects.put(fileName, new FileObject(fileToBeWritten));
-		listOfFileObjects.get(fileName).lock.getWriteLock(priority);
+		//listOfFileObjects.get(fileName).lock.getWriteLock(priority);
 		lookedUpFiles.put(a.senderId + ":" + randFileId, listOfFileObjects.get(fileName).fileHandle);
 		//FileObject newFileHandle = new FileObject (fileToBeWritten);
 		//listOfFileObjects.put(listOfFiles[i].getName(),a);
@@ -216,7 +216,7 @@ public class CommandProcessor {
 	DataObject Push(DataObject a, String fileName, int startByte, int length, boolean isLast) {
 		a.message = "Rsp Push " + String.valueOf(a.reqNo);
 		System.out.println("Push requested: " + fileName);
-		File fileToBeWritten = new File(Listener.serverRoot + fileName);
+		File fileToBeWritten = new File(Listener.tmpRoot + "tmp_" + fileName);
 		try {
 			if(streamToBeWritten == null)
 				streamToBeWritten = new FileOutputStream(fileToBeWritten);
@@ -225,6 +225,8 @@ public class CommandProcessor {
 			if (isLast) {
 				streamToBeWritten.close();
 				streamToBeWritten = null;
+				File targetDir = new File (Listener.serverRoot);
+				fileToBeWritten.renameTo(new File(targetDir, fileName));
 			}
 		}
 		catch(IOException e) {
@@ -261,9 +263,9 @@ public class CommandProcessor {
 			error = true;
 		}
 		if(!error) {
-			listOfFileObjects.get(fileName).lock.getWriteLock(priority);
+			//listOfFileObjects.get(fileName).lock.getWriteLock(priority);
 			deleted = toBeDeleted.delete();
-			listOfFileObjects.get(fileName).lock.writerDone();
+			//listOfFileObjects.get(fileName).lock.writerDone();
 			listOfFileObjects.remove(fileName);
 		}
 		a.message = "Rsp Delete " + String.valueOf(a.reqNo) + " " + fileName;

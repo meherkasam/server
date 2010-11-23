@@ -12,6 +12,7 @@ public class Listener{
 	static int localPort = 0;
 	static int maxLoad = 0;
 	static String serverRoot = "";
+	static String tmpRoot = "";
 	static String senderId = "";
 	static int reqNo;
 	boolean ReadConfig(String fileName) {
@@ -58,6 +59,16 @@ public class Listener{
 	SSLServerSocket listenerSocket = null;
 	SSLSocket clientSocket = null;
 	public Listener(String fileName) {
+		tmpRoot = "tmp_" + serverRoot;
+		File folder = new File(Listener.tmpRoot);
+		if(!folder.exists()) {
+			folder.mkdir();
+		} else { 
+			File[] listOfFiles = folder.listFiles();
+			for(int i = 0; (i < listOfFiles.length); i++) {
+				listOfFiles[i].delete();
+			}
+		}
 		reqNo = 0;
 		if(!ReadConfig(fileName)) {
 			System.out.println("Error in configuration file. Exiting");
